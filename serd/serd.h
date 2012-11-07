@@ -814,7 +814,8 @@ serd_writer_new(SerdSyntax     syntax,
                 SerdEnv*       env,
                 const SerdURI* base_uri,
                 SerdSink       sink,
-                void*          stream);
+                void*          stream,
+                bool           drop_blank);
 
 /**
    Free @c writer.

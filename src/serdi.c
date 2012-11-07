@@ -46,6 +46,7 @@ print_usage(const char* name, bool error)
 	fprintf(os, "Use - for INPUT to read from standard input.\n\n");
 	fprintf(os, "  -b           Fast bulk output for large serialisations.\n");
 	fprintf(os, "  -c PREFIX    Chop PREFIX from matching blank node IDs.\n");
+	fprintf(os, "  -d           Drop blank nodes.\n");
 	fprintf(os, "  -e           Eat input one character at a time.\n");
 	fprintf(os, "  -f           Keep full URIs in input (don't qualify).\n");
 	fprintf(os, "  -h           Display this help and exit.\n");
@@ -100,6 +101,7 @@ main(int argc, char** argv)
 	bool           bulk_read     = true;
 	bool           bulk_write    = false;
 	bool           full_uris     = false;
+	bool           drop_blank    = false;
 	bool           quiet         = false;
 	const uint8_t* in_name       = NULL;
 	const uint8_t* add_prefix    = NULL;
@@ -113,6 +115,8 @@ main(int argc, char** argv)
 			break;
 		} else if (argv[a][1] == 'b') {
 			bulk_write = true;
+		} else if (argv[a][1] == 'd') {
+			drop_blank = true;
 		} else if (argv[a][1] == 'e') {
 			bulk_read = false;
 		} else if (argv[a][1] == 'f') {
@@ -206,7 +210,7 @@ main(int argc, char** argv)
 
 	SerdWriter* writer = serd_writer_new(
 		output_syntax, (SerdStyle)output_style,
-		env, &base_uri, serd_file_sink, out_fd);
+		env, &base_uri, serd_file_sink, out_fd, drop_blank);
 
 	SerdReader* reader = serd_reader_new(
 		input_syntax, writer, NULL,
