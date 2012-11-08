@@ -94,7 +94,7 @@ struct SerdWriterImpl {
 	unsigned      indent;
 	Sep           last_sep;
 	bool          empty;
-    bool          drop_blank;
+    SerdNodeTypes drop;
 };
 
 typedef enum {
@@ -503,11 +503,12 @@ serd_writer_write_statement(SerdWriter*        writer,
 		return SERD_ERR_BAD_ARG;
 	}
 
-    if (writer->drop_blank) {
-        if (subject->type == SERD_BLANK ||
-            object->type == SERD_BLANK ||
+    if (writer->drop) {
+        if (object->type & writer->drop || ((writer->drop & SERD_BLANK) &&
+            subject->type == SERD_BLANK ||
             predicate->type == SERD_BLANK ||
-            (datatype && datatype->type == SERD_BLANK)) {
+            (datatype && datatype->type == SERD_BLANK))
+        ) {
             return SERD_SUCCESS; 
         }
     }
@@ -653,7 +654,7 @@ serd_writer_new(SerdSyntax     syntax,
                 const SerdURI* base_uri,
                 SerdSink       ssink,
                 void*          stream,
-                bool           drop_blank)
+                SerdNodeTypes  drop)
 {
 	const WriteContext context = WRITE_CONTEXT_NULL;
 	SerdWriter*        writer  = (SerdWriter*)malloc(sizeof(SerdWriter));
@@ -666,7 +667,7 @@ serd_writer_new(SerdSyntax     syntax,
 	writer->anon_stack   = serd_stack_new(sizeof(WriteContext));
 	writer->sink         = ssink;
 	writer->stream       = stream;
-	writer->drop_blank   = drop_blank;
+	writer->drop         = drop;
 	writer->error_sink   = NULL;
 	writer->error_handle = NULL;
 	writer->context      = context;

@@ -46,16 +46,18 @@ print_usage(const char* name, bool error)
 	fprintf(os, "Use - for INPUT to read from standard input.\n\n");
 	fprintf(os, "  -b           Fast bulk output for large serialisations.\n");
 	fprintf(os, "  -c PREFIX    Chop PREFIX from matching blank node IDs.\n");
-	fprintf(os, "  -d           Drop blank nodes.\n");
+	fprintf(os, "  -d           Drop triples with blank nodes.\n");
 	fprintf(os, "  -e           Eat input one character at a time.\n");
 	fprintf(os, "  -f           Keep full URIs in input (don't qualify).\n");
 	fprintf(os, "  -h           Display this help and exit.\n");
 	fprintf(os, "  -i SYNTAX    Input syntax (`turtle' or `ntriples').\n");
+	fprintf(os, "  -l           Drop triples with literal object node.\n");
 	fprintf(os, "  -o SYNTAX    Output syntax (`turtle' or `ntriples').\n");
 	fprintf(os, "  -p PREFIX    Add PREFIX to blank node IDs.\n");
 	fprintf(os, "  -q           Suppress all output except data.\n");
 	fprintf(os, "  -r ROOT_URI  Keep relative URIs within ROOT_URI.\n");
 	fprintf(os, "  -s INPUT     Parse INPUT as string (terminates options).\n");
+	fprintf(os, "  -u           Drop triples with URI object node.\n");
 	fprintf(os, "  -v           Display version information and exit.\n");
 	return error ? 1 : 0;
 }
@@ -101,7 +103,7 @@ main(int argc, char** argv)
 	bool           bulk_read     = true;
 	bool           bulk_write    = false;
 	bool           full_uris     = false;
-	bool           drop_blank    = false;
+	SerdNodeTypes  drop          = 0;
 	bool           quiet         = false;
 	const uint8_t* in_name       = NULL;
 	const uint8_t* add_prefix    = NULL;
@@ -116,7 +118,7 @@ main(int argc, char** argv)
 		} else if (argv[a][1] == 'b') {
 			bulk_write = true;
 		} else if (argv[a][1] == 'd') {
-			drop_blank = true;
+			drop = drop | SERD_BLANK;
 		} else if (argv[a][1] == 'e') {
 			bulk_read = false;
 		} else if (argv[a][1] == 'f') {
@@ -136,6 +138,8 @@ main(int argc, char** argv)
 			if (++a == argc || !set_syntax(&input_syntax, argv[a])) {
 				return bad_arg(argv[0], 'i');
 			}
+		} else if (argv[a][1] == 'l') {
+			drop = drop | SERD_LITERAL;
 		} else if (argv[a][1] == 'o') {
 			if (++a == argc || !set_syntax(&output_syntax, argv[a])) {
 				return bad_arg(argv[0], 'o');
@@ -155,6 +159,8 @@ main(int argc, char** argv)
 				return bad_arg(argv[0], 'r');
 			}
 			root_uri = (const uint8_t*)argv[a];
+	    } else if (argv[a][1] == 'u') {
+			drop = drop | SERD_URI | SERD_CURIE;
 		} else {
 			fprintf(stderr, "%s: Unknown option `%s'\n", argv[0], argv[a]);
 			return print_usage(argv[0], true);
@@ -210,7 +216,7 @@ main(int argc, char** argv)
 
 	SerdWriter* writer = serd_writer_new(
 		output_syntax, (SerdStyle)output_style,
-		env, &base_uri, serd_file_sink, out_fd, drop_blank);
+		env, &base_uri, serd_file_sink, out_fd, drop);
 
 	SerdReader* reader = serd_reader_new(
 		input_syntax, writer, NULL,

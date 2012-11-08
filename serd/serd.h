@@ -173,7 +173,7 @@ typedef enum {
 	   e.g. "rdf:type".
 	   @see <a href="http://www.w3.org/TR/curie">CURIE Syntax 1.0</a>
 	*/
-	SERD_CURIE = 3,
+	SERD_CURIE = 6, // bitwise implies SERD_URI
 
 	/**
 	   A blank node.
@@ -183,9 +183,14 @@ typedef enum {
 	   @see <a href="http://www.w3.org/TeamSubmission/turtle#nodeID">Turtle
 	   <tt>nodeID</tt></a>
 	*/
-	SERD_BLANK = 4,
+	SERD_BLANK = 8,
 
 } SerdType;
+
+/**
+   Bitwise OR of SerdType values.
+*/
+typedef uint32_t SerdNodeTypes;
 
 /**
    Flags indicating certain string properties relevant to serialisation.
@@ -815,7 +820,7 @@ serd_writer_new(SerdSyntax     syntax,
                 const SerdURI* base_uri,
                 SerdSink       sink,
                 void*          stream,
-                bool           drop_blank);
+                SerdNodeTypes  drop);
 
 /**
    Free @c writer.
